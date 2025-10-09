@@ -1,0 +1,64 @@
+Oil Palm Data Scraping and Processing Scripts
+
+This repository contains Python scripts for scraping web data on oil palm topics, storing it in a SQLite database, and optionally splitting the database by categories. The scripts focus on reputable sources, categorize content (e.g., Cultivation, Processing), and ensure data quality through filtering and deduplication.
+1. split_sqlite_by_category.py
+Purpose
+This script splits a source SQLite database into multiple target databases, one per category, based on a detected category-like column in each table (e.g., "category", "tag"). It's designed to organize scraped data (like from the scraper scripts) for easier analysis. Rows without categories go to "Uncategorized.db". Tables without a category column are skipped by default.
+Key Functions
+
+Category Detection: Scans table columns for candidate names (case-insensitive, e.g., "category", "tag").
+Category Extraction: Handles single values, lists, or delimited strings (e.g., comma-separated).
+Table Replication: Copies table schemas and inserts rows into per-category DBs, using batch fetching for efficiency.
+Sanitization: Ensures safe filenames for output DBs.
+Options: Includes non-category tables if --include-noncategory is used.
+
+Usage
+textpython split_sqlite_by_category.py --db "path/to/source.db" --outdir "." --include-noncategory
+
+Default source: C:/Users/Roy/Documents/DBOilPalmmiro/oilpalmdbmiro.db.
+Outputs DB files like Cultivation.db in the specified directory.
+Notes: Use DB Browser for SQLite to verify outputs. For many-to-many tags, preprocess categories first.
+
+2. ScraperScriptOilPalm_with_mirror.py
+Purpose
+This is an enhanced web scraper for oil palm-related content from reputable sources. It crawls seed URLs, extracts and preprocesses text, classifies into categories (e.g., Cultivation, Environmental Impact), applies quality checks (language, duplicates, length, source credibility), and stores in a main SQLite DB. It optionally mirrors articles to per-category DB files (e.g., Cultivation.db) for modular storage.
+Key Functions
+
+Crawling: Uses a FIFO queue for breadth-first search (depth-limited to 3), filtering links by reputable domains and oil palm keywords.
+Extraction: Fetches HTML (or PDF if enabled), extracts title and text using BeautifulSoup.
+Preprocessing: Normalizes text (lowercase, remove extras).
+Classification: Keyword-based scoring into predefined categories.
+Quality Assurance: Checks language (English only), deduplicates via MD5 hash, ensures reputable domains, and minimum length.
+Storage: Inserts into main DB; mirrors to category DBs if --mirror-category-dbs is used.
+Mirroring: Creates/reuses per-category DBs with matching schema.
+
+Usage
+textpython ScraperScriptOilPalm_with_mirror.py --mirror-category-dbs
+
+DB Path: C:\Users\Roy\Documents\DBOilPalmmiro\oilpalmdbmiro.db.
+Seed URLs: Predefined list from reputable sites (e.g., eos.com, iucn.org).
+Notes: Interruptible (progress saved). Requires libraries: requests, bs4, sqlite3, etc. PDF support needs pdfplumber.
+
+3. ScraperScriptOilPalm.py
+Purpose
+This is the base web scraper for oil palm data, similar to the mirrored version but without category DB mirroring. It crawls, extracts, preprocesses, classifies, quality-checks, and stores articles in a single SQLite DB. Ideal for centralized storage without splitting.
+Key Functions
+
+Crawling: FIFO queue for BFS (depth 3 max), domain and keyword filtering.
+Extraction/Preprocessing/Classification/Quality: Identical to the mirrored version.
+Storage: Only in the main DB (no per-category files).
+
+Usage
+textpython ScraperScriptOilPalm.py
+
+DB Path: Same as above.
+Seed URLs: Same predefined reputable list.
+Notes: Simpler than the mirrored version; use for quick scraping. Resumable on interrupt.
+
+General Notes
+
+Dependencies: Install via pip install requests beautifulsoup4 sqlite3 langdetect pdfplumber (pdfplumber optional).
+Categories: Shared across scripts (Cultivation, Processing, etc.).
+Reputable Domains: Whitelist ensures credible sources.
+Workflow: Run scraper first to populate DB, then splitter for organization.
+Limitations: No full NLP; keyword-based. Depth-limited to avoid over-crawling.
