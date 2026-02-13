@@ -1,277 +1,313 @@
-🌴 Oil Palm Intelligence Scraper (v1 – Category Mirroring Edition)
+# 🌴 Modular Web Crawler System  
+### Oil Palm Intelligence Data Engine
 
-A modular oil palm web scraping system that:
+A production-ready, modular web crawler designed for structured oil palm data acquisition, classification, validation, and database partitioning.
 
-Crawls reputable agricultural & research sources
+---
 
-Extracts and cleans structured article data
+## 🚀 Overview
 
-Automatically classifies content into agronomy categories
+This system:
 
-Stores data in a main SQLite database
+- Crawls reputable research and agricultural domains  
+- Extracts structured article data  
+- Classifies content into agronomy categories  
+- Performs quality validation  
+- Stores data in a primary SQLite database  
+- Optionally mirrors content into per-category database files  
+- Supports post-processing database splitting  
 
-Optionally mirrors articles into separate category-specific databases
+Built for reliability, resume safety, and modular scalability.
 
-Allows post-processing splitting of an existing database
+---
 
-📦 Project Files
-ScraperScriptOilPalm.py                  # Core scraper (single DB)
-ScraperScriptOilPalm_with_mirror.py      # Scraper with per-category DB mirroring
-split_sqlite_by_category.py              # Post-processing DB splitter
-requirements.txt                         # Python dependencies
+## 🧠 Architecture
 
-🧠 System Overview
-
-The scraper follows this pipeline:
-
+```
 Seed URLs
    ↓
-Crawl (reputable domains only)
+Crawl Engine
    ↓
-Extract HTML
+HTML Parsing
    ↓
-Clean & Normalize Text
+Text Normalization
    ↓
-Keyword-Based Classification
+Keyword Classification
    ↓
 Quality Assurance
    ↓
-Store in Database
+Main Database (SQLite)
+   ↓
+Optional Category DB Mirroring
+```
 
-🗂 Categories
+---
 
-The scraper classifies content into:
+## 📂 Project Structure
 
-Cultivation
+```text
+OilPalmCrawler/
+│
+├── ScraperScriptOilPalm.py
+├── ScraperScriptOilPalm_with_mirror.py
+├── split_sqlite_by_category.py
+├── requirements.txt
+└── README.md
+```
 
-Processing
+---
 
-Environmental Impact
+## 🗄 Database Design
 
-Market Trends
+### Main Database
 
-Plantation Management
+```
+oilpalmdbmiro.db
+```
 
-Uncategorized
+Tables:
+
+```sql
+pending_urls
+visited_urls
+articles
+```
+
+### Articles Schema
+
+```sql
+CREATE TABLE articles (
+    url TEXT PRIMARY KEY,
+    title TEXT,
+    content TEXT,
+    category TEXT,
+    scraped_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    hash TEXT UNIQUE
+);
+```
+
+---
+
+## 🗂 Classification Categories
+
+- Cultivation  
+- Processing  
+- Environmental Impact  
+- Market Trends  
+- Plantation Management  
+- Uncategorized  
 
 Classification is keyword-score based.
 
-🗄 Database Structure
+---
 
-Main database file:
+# ⚙️ Installation
 
-oilpalmdbmiro.db
+## 1️⃣ Create Virtual Environment (Recommended)
 
-
-Tables created automatically:
-
-pending_urls
-
-visited_urls
-
-articles
-
-Articles table schema:
-
-url TEXT PRIMARY KEY
-title TEXT
-content TEXT
-category TEXT
-scraped_date TIMESTAMP
-hash TEXT UNIQUE
-
-🚀 Installation
-1️⃣ Create Virtual Environment (Recommended)
+```bash
 python -m venv venv
 venv\Scripts\activate
+```
 
-2️⃣ Install Dependencies
+## 2️⃣ Install Dependencies
+
+```bash
 pip install -r requirements.txt
-
+```
 
 Dependencies:
 
-requests 
+- requests  
+- beautifulsoup4  
+- lxml  
+- langdetect  
+- pdfplumber  
 
-requirements
+---
 
-beautifulsoup4 
+# ▶ Running the Scraper
 
-requirements
+---
 
-lxml 
+## 🔹 Standard Mode (Single Database)
 
-requirements
-
-langdetect 
-
-requirements
-
-pdfplumber 
-
-requirements
-
-▶ Running the Scraper
-🔹 Option 1 — Standard Mode (Single DB Only)
+```bash
 python ScraperScriptOilPalm.py
+```
 
+Stores everything in:
 
-Behavior:
+```
+oilpalmdbmiro.db
+```
 
-Stores everything in oilpalmdbmiro.db
+---
 
-No per-category DB files created
+## 🔹 Mirror Mode (Recommended)
 
-🔹 Option 2 — Mirror Mode (Recommended)
+```bash
 python ScraperScriptOilPalm_with_mirror.py --mirror-category-dbs
+```
 
+This will:
 
-Behavior:
+- Store in main database  
+- Also create one database per category:
 
-Stores data in main DB
-
-Also creates separate DB files:
-
+```
 Cultivation.db
 Processing.db
-Market_Trends.db
 Environmental_Impact.db
+Market_Trends.db
 Plantation_Management.db
 Uncategorized.db
+```
 
+Each contains its own `articles` table.
 
-Each contains its own articles table.
+---
 
-🔁 Resuming After Interruption
+# 🔁 Resume Safety
 
-The scraper is fully resumable.
+The crawler is fully resumable.
 
-If stopped:
+If interrupted:
 
+```bash
 Ctrl + C
-
+```
 
 Then simply rerun:
 
+```bash
 python ScraperScriptOilPalm_with_mirror.py --mirror-category-dbs
+```
 
+The system:
 
-It will:
+- Skips visited URLs  
+- Prevents duplicates via content hash  
+- Continues from queue  
 
-Continue from pending_urls
+No data loss.
 
-Skip already visited URLs
+---
 
-Prevent duplicate articles (via hash check)
-
-No data loss occurs.
-
-🛠 Splitting an Existing Database
-
-If you already have a populated oilpalmdbmiro.db and want to split it into category-based DB files:
-
-python split_sqlite_by_category.py
-
-
-Or specify DB path:
-
-python split_sqlite_by_category.py --db "C:\Users\Roy\Documents\DBOilPalmmiro\oilpalmdbmiro.db"
-
-
-This creates:
-
-CategoryName.db
-
-
-Rows without a category go to:
-
-Uncategorized.db
-
-🧪 Quality Assurance Rules
+# 🧪 Quality Assurance Rules
 
 An article is rejected if:
 
-Not English (langdetect)
-
-Duplicate content (hash match)
-
-Domain not in whitelist
-
-Content length < 100 characters
+- Not English  
+- Duplicate content  
+- Domain not in whitelist  
+- Content too short  
 
 This ensures high data purity.
 
-🧯 Safe Restart & Recovery
+---
 
-If system crashes:
+# 🛠 Splitting an Existing Database
 
-Do NOT delete the DB.
+If you already have a populated database and want to split by category:
 
-Just rerun the script.
+```bash
+python split_sqlite_by_category.py
+```
 
-Queue resumes automatically.
+Or specify path:
 
-If DB becomes corrupted:
+```bash
+python split_sqlite_by_category.py --db "C:\path\to\oilpalmdbmiro.db"
+```
 
-Restore from backup
+This creates one `.db` file per category.
 
-Or rerun scraper from scratch
+Rows without categories go to:
 
-📂 Output Location
+```
+Uncategorized.db
+```
 
-Database location (hardcoded in script):
+---
 
+# 📂 Output Location
+
+Default database path:
+
+```
 C:\Users\Roy\Documents\DBOilPalmmiro\oilpalmdbmiro.db
-
+```
 
 Category DBs are created in the same folder.
 
-You may modify DB_PATH inside the script to change this.
+Modify `DB_PATH` in the script to change this.
 
-⚙ Configuration Points You Can Modify
+---
 
-Inside script:
+# 🧩 Configuration Points
 
-SEED_URLS → Expand sources
+Inside the script you may modify:
 
-REPUTABLE_DOMAINS → Adjust whitelist
+- `SEED_URLS`
+- `REPUTABLE_DOMAINS`
+- `CATEGORIES`
+- Crawl depth
+- Delay timing
+- DB path
 
-CATEGORIES → Modify classification logic
+---
 
-max_depth in add_to_pending
+# 🛡 Design Strengths
 
-Politeness delay (time.sleep())
+✔ Modular  
+✔ Resume-safe  
+✔ Deduplication via hash  
+✔ Domain credibility filtering  
+✔ Optional DB mirroring  
+✔ Post-processing splitter  
+✔ SQLite WAL optimization  
 
-🧩 Architecture Strengths
+---
 
-✔ Modular
-✔ Resume-safe
-✔ Deduplication built-in
-✔ Domain credibility filtering
-✔ Optional DB mirroring
-✔ Post-processing splitter
+# 📊 Typical Workflow
 
-🧭 Typical Workflow
-First Time Setup
+### Initial Large Crawl
 
-Run mirror version:
-
+```bash
 python ScraperScriptOilPalm_with_mirror.py --mirror-category-dbs
+```
 
-Daily Data Expansion
+### Daily Update Run
 
-Run again. It will only fetch new URLs.
+Run the same command.  
+Only new URLs will be processed.
 
-After Large Crawl
+### Post-Processing Split
 
-Use:
+```bash
+python split_sqlite_by_category.py
+```
 
-split_sqlite_by_category.py
+---
+
+# 🔮 Future Enhancements
+
+- Scheduler integration (cron / Task Scheduler)
+- PostgreSQL support
+- Async crawling
+- Dashboard analytics
+- LLM-based semantic classification
+
+---
+
+# 👤 Maintainer
+
+Roy Obiri-Yeboah  
+Oil Palm Intelligence System  
+
+---
 
 
-if you want physical separation by category.
+---
 
-👤 Maintainer
-
-Roy Obiri-Yeboah
-Oil Palm Data Intelligence System
