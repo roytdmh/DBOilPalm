@@ -1,4 +1,4 @@
-🌴 Oil Palm Intelligence Scraper (v2 – Category Mirroring Edition)
+🌴 Oil Palm Intelligence Scraper (v1 – Category Mirroring Edition)
 
 A modular oil palm web scraping system that:
 
